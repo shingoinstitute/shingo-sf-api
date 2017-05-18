@@ -1,8 +1,8 @@
 import { Module } from 'nest.js';
+import { SalesforceService } from './salesforce.service';
 import 'rxjs';
-import { QueryService } from './query.service';
 
 @Module({
-    controllers: [ QueryService ]
+    controllers: [ SalesforceService ]
 })
 export class ApplicationModule {}

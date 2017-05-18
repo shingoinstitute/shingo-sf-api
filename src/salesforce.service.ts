@@ -21,7 +21,7 @@ let conn;
  * @method search :: Message pattern { cmd: 'search' } -- Execute SOSL Query
  */
 @Controller()
-export class QueryService {
+export class SalesforceService {
     /**
      * @desc :: Initializes Salesforce connection with loginUrl = process.env.SF_URL and instanceURL = process.env.SF_ENV
      */
@@ -37,7 +37,7 @@ export class QueryService {
     @MessagePattern({ cmd: 'soql_query' })
     query(q, respond){
         // Parse query
-        var queryString = q.action;
+        let queryString = q.action;
         q.fields.forEach((f,i)=>{ queryString += " " + f + (i < q.fields.length - 1 ? "," : "") });
 
         queryString += " FROM " + q.table;
@@ -81,6 +81,7 @@ export class QueryService {
             // Retrieve records for given object and ids
             conn.sobject(data.object).retrieve(data.ids, (err, res)=> { 
                 if(err) return respond(err)
+                delete res.attributes
                 respond(null, res);
                 conn.logout();
             });
