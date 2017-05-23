@@ -2,6 +2,7 @@ import { Controller } from 'nest.js';
 import { MessagePattern } from 'nest.js/microservices';
 import * as request from 'request';
 import * as jsforce from 'jsforce';
+import * as deepClean from 'deep-cleaner';
 
 /**
  * @desc :: Symbol to store Salesforce Connection
@@ -51,7 +52,7 @@ export class SalesforceService {
             let records = new Array()
             conn.query(queryString)
             .on("record", (record) => { 
-                delete record.attributes
+                deepClean(record, 'attributes');
                 records.push(record) 
             })
             .on("end", () => {
@@ -208,6 +209,9 @@ export class SalesforceService {
 
             conn.search(`FIND ${data.search} IN ALL FIELDS RETURNING ${data.objects}`, (err, res) =>{
                 if(err) return respond(err)
+                res.searchRecords.forEach((el, i)=>{
+                    deepClean(res.searchRecords[i], 'attributes');
+                });
                 respond(null, res)
                 conn.logout();
             })
