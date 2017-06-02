@@ -1,9 +1,21 @@
-import { NestFactory, Transport } from 'nest.js';
-import { ApplicationModule } from './app.module';
+import { SalesforceMicroservice } from './microservices/salesforce.microservice';
+import * as grpc from 'grpc';
 
-const transport = Transport.REDIS;
-const url = process.env.REDIS_URL || 'redis://shingo-redis:6379'
-const port = process.env.PORT || 3000
+const microservice = new SalesforceMicroservice();
+const port = process.env.PORT || 8888;
 
-const app = NestFactory.createMicroservice(ApplicationModule, { transport, url, port });
-app.listen(() => console.log(`Salesforce API microservice is listening on port ${port}`));
+let server = new grpc.Server();
+server.addService(microservice.sfServices.SalesforceMicroservices.service, {
+    query: microservice.query,
+    retrieve: microservice.retrieve,
+    create: microservice.create,
+    update: microservice.update,
+    delete: microservice.delete,
+    upsert: microservice.upsert,
+    describe: microservice.describe,
+    search: microservice.search
+});
+
+server.bind(`0.0.0.0:${port}`, grpc.ServerCredentials.createInsecure());
+server.start();
+console.log(`SalesforceMicroservice is listening on port ${port}.`)
