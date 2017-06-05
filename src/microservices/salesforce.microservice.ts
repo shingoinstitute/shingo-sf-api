@@ -14,48 +14,112 @@ export class SalesforceMicroservice {
     query(call, callback){
         SalesforceService.query(call.request)
             .then(records => callback(null, records))
-            .catch(error => callback(error));
+            .catch(error => {
+                const metadata = new grpc.Metadata();
+                metadata.add('error-bin', Buffer.from(JSON.stringify(error)));
+                callback({
+                    code: grpc.status.INTERNAL,
+                    details: error.name,
+                    metadata: metadata
+                });
+            });
     }
 
     retrieve(call, callback){
         SalesforceService.retrieve(call.request)
             .then(record => callback(null, record))
-            .catch(error => callback(error));
+            .catch(error => {
+                const metadata = new grpc.Metadata();
+                metadata.add('error-bin', Buffer.from(JSON.stringify(error)));
+                callback({
+                    code: grpc.status.INTERNAL,
+                    details: error.name,
+                    metadata: metadata
+                });
+            });
     }
 
     create(call, callback){
         SalesforceService.create(call.request)
             .then(record => callback(null, record))
-            .catch(error => callback(error));
+            .catch(error => {
+                const metadata = new grpc.Metadata();
+                metadata.add('error-bin', Buffer.from(JSON.stringify(error)));
+                callback({
+                    code: grpc.status.INTERNAL,
+                    details: error.name,
+                    metadata: metadata
+                });
+            });
     }
 
     update(call, callback){
         SalesforceService.update(call.request)
             .then(record => callback(null, record))
-            .catch(error => callback(error));
+            .catch(error => {
+                const metadata = new grpc.Metadata();
+                metadata.add('error-bin', Buffer.from(JSON.stringify(error)));
+                callback({
+                    code: grpc.status.INTERNAL,
+                    details: error.name,
+                    metadata: metadata
+                });
+            });
     }
 
     delete(call, callback){
         SalesforceService.delete(call.request)
             .then(record => callback(null, record))
-            .catch(error => callback(error));
+            .catch(error => {
+                const metadata = new grpc.Metadata();
+                metadata.add('error-bin', Buffer.from(JSON.stringify(error)));
+                callback({
+                    code: grpc.status.INTERNAL,
+                    details: error.name,
+                    metadata: metadata
+                });
+            });
     }
 
     upsert(call, callback){
         SalesforceService.upsert(call.request)
             .then(record => callback(null, record))
-            .catch(error => callback(error));
+            .catch(error => {
+                const metadata = new grpc.Metadata();
+                metadata.add('error-bin', Buffer.from(JSON.stringify(error)));
+                callback({
+                    code: grpc.status.INTERNAL,
+                    details: error.name,
+                    metadata: metadata
+                });
+            });
     }
 
     describe(call, callback){
         SalesforceService.describe(call.request.object)
             .then(record => callback(null, record))
-            .catch(error => callback(error));
+            .catch(error => {
+                const metadata = new grpc.Metadata();
+                metadata.add('error-bin', Buffer.from(JSON.stringify(error)));
+                callback({
+                    code: grpc.status.INTERNAL,
+                    details: error.name,
+                    metadata: metadata
+                });
+            });
     }
 
     search(call, callback){
         SalesforceService.search(call.request)
             .then(record => callback(null, record))
-            .catch(error => callback(error));
+            .catch(error => {
+                const metadata = new grpc.Metadata();
+                metadata.add('error-bin', Buffer.from(JSON.stringify(error)));
+                callback({
+                    code: grpc.status.INTERNAL,
+                    details: error.name,
+                    metadata: metadata
+                });
+            });
     }
 }

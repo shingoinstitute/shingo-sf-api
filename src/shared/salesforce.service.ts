@@ -1,3 +1,4 @@
+import * as bluebird from 'bluebird';
 import * as jsforce from 'jsforce';
 import * as deepClean from 'deep-cleaner';
 
@@ -13,9 +14,13 @@ export interface IdRequest {
     ids : string[]
 }
 
+export interface JSONObject {
+    contents : string
+}
+
 export interface RecordsRequest {
     object : string,
-    records: object[]
+    records: JSONObject[]
 }
 
 export interface SearchRequest {
@@ -27,123 +32,113 @@ export class SalesforceService {
     static conn = new jsforce.Connection({loginUrl: process.env.SF_URL, instanceURL: process.env.SF_ENV});
 
     static async query(queryRequest : QueryRequest) {
+        // this.conn = bluebird.promisifyAll(this.conn);
         let queryString = queryRequest.action;
         queryRequest.fields.forEach((f,i)=>{ queryString += " " + f + (i < queryRequest.fields.length - 1 ? "," : "") });
 
         queryString += " FROM " + queryRequest.table;
         if(queryRequest.clauses) queryString += " WHERE " + queryRequest.clauses;
 
-        // Login into Salesforce
-        SalesforceService.conn.login(process.env.SF_USER, process.env.SF_PASS, (err, res)=>{ 
-            if(err) return Promise.reject(err);
+        console.log('DEBUG: Executing SOQL: ', queryString);
+        try {
+            // Login into Salesforce
+            await SalesforceService.conn.login(process.env.SF_USER, process.env.SF_PASS);
 
             // Execute query
             let records = new Array()
-            SalesforceService.conn.query(queryString)
-            .on("record", (record) => { 
-                deepClean(record, 'attributes');
-                records.push(record) ;
-            })
-            .on("end", () => {
-                Promise.resolve({ records });
-                SalesforceService.conn.logout();
-            })
-            .on("error", (err) => {
-                console.log("Error during Query: ", err);
-                Promise.reject(err);
-                SalesforceService.conn.logout();
-            })
-            .run({ autoFetch: true, maxFetch: 10000});
-        });
+            let res = await SalesforceService.conn.query(queryString);
+            deepClean(res, 'attributes');
+            SalesforceService.conn.logout();
+            return Promise.resolve({ contents: JSON.stringify(res) });
+
+        } catch(error) {
+            console.error('Error in SalesforceService.query(): ', error);
+            return Promise.reject(error);
+        }
     }
 
     static async retrieve(idRequest : IdRequest) {
-        // Login to Salesforce
-        SalesforceService.conn.login(process.env.SF_USER, process.env.SF_PASS, (err, res)=>{ 
-            if(err) return Promise.reject(err);
-
+        try{
+            // Login to Salesforce
+            await SalesforceService.conn.login(process.env.SF_USER, process.env.SF_PASS);
             // Retrieve records for given object and ids
-            SalesforceService.conn.sobject(idRequest.object).retrieve(idRequest.ids, (err, res)=> { 
-                if(err) return Promise.reject(err);
-                deepClean(res, 'attributes');
-                Promise.resolve(res);
-                SalesforceService.conn.logout();
-            });
-        });
+            let res = await SalesforceService.conn.sobject(idRequest.object).retrieve(idRequest.ids);
+            deepClean(res, 'attributes');
+            SalesforceService.conn.logout();
+            return Promise.resolve({contents: JSON.stringify(res)});
+        } catch(error) {
+            return Promise.reject(error);
+        }
     }
 
     static async create(recordsRequest : RecordsRequest) {
-        SalesforceService.conn.login(process.env.SF_USER, process.env.SF_PASS, (err, res)=>{ 
-            if(err) return Promise.reject(err);
-
-            SalesforceService.conn.sobject(recordsRequest.object).create(recordsRequest.records, (err, res)=> { 
-                if(err) return Promise.reject(err);
-                Promise.resolve(res);
-                SalesforceService.conn.logout();
-            });
-        });
+        let records = new Array();
+        recordsRequest.records.forEach(record => records.push(JSON.parse(record.contents)));
+        try{
+            await SalesforceService.conn.login(process.env.SF_USER, process.env.SF_PASS);
+            let res = await SalesforceService.conn.sobject(recordsRequest.object).create(records);
+            SalesforceService.conn.logout();
+            return Promise.resolve({contents: JSON.stringify(res)});
+        } catch(error) {
+            return Promise.reject(error);
+        }
     }
 
     static async update(recordsRequest : RecordsRequest) {
-        SalesforceService.conn.login(process.env.SF_USER, process.env.SF_PASS, (err, res)=>{ 
-            if(err) return Promise.reject(err);
-
-            SalesforceService.conn.sobject(recordsRequest.object).update(recordsRequest.records, (err, res)=> { 
-                if(err) return Promise.reject(err);
-                Promise.resolve(res);
-                SalesforceService.conn.logout();
-            });
-        });
+        let records = new Array();
+        recordsRequest.records.forEach(record => records.push(JSON.parse(record.contents)));
+        try {
+            await SalesforceService.conn.login(process.env.SF_USER, process.env.SF_PASS);
+            let res = await SalesforceService.conn.sobject(recordsRequest.object).update(records);
+            SalesforceService.conn.logout();
+            return Promise.resolve({contents: JSON.stringify(res)});
+        } catch(error) {
+            return Promise.reject(error);
+        }
     }
 
     static async delete(idRequest : IdRequest) {
-        SalesforceService.conn.login(process.env.SF_USER, process.env.SF_PASS, (err, res)=>{ 
-            if(err) return Promise.reject(err);
-
-            SalesforceService.conn.sobject(idRequest.object).delete(idRequest.ids, (err, res)=> { 
-                if(err) return Promise.reject(err);
-                Promise.resolve(res);
-                SalesforceService.conn.logout();
-            });
-        });
+        try {
+            await SalesforceService.conn.login(process.env.SF_USER, process.env.SF_PASS);
+            let res = await SalesforceService.conn.sobject(idRequest.object).delete(idRequest.ids);
+            SalesforceService.conn.logout();
+            return Promise.resolve({contents: JSON.stringify(res)});
+        } catch(error) {
+            return Promise.reject(error);
+        }
     }
 
     static async upsert(recordsRequest : RecordsRequest) {
-        SalesforceService.conn.login(process.env.SF_USER, process.env.SF_PASS, (err, res)=>{ 
-            if(err) return Promise.reject(err);
-
-            SalesforceService.conn.sobject(recordsRequest.object).upsert(recordsRequest.records, (err, res)=> { 
-                if(err) return Promise.reject(err);
-                Promise.resolve(res);
-                SalesforceService.conn.logout();
-            });
-        });
+        try{
+            await SalesforceService.conn.login(process.env.SF_USER, process.env.SF_PASS)
+            let res = await SalesforceService.conn.sobject(recordsRequest.object).upsert(recordsRequest.records);
+            SalesforceService.conn.logout();
+            return Promise.resolve({contents: JSON.stringify(res)});
+        } catch(error) {
+            return Promise.reject(error);
+        }
     }
 
     static async describe(object : string){
-        SalesforceService.conn.login(process.env.SF_USER, process.env.SF_PASS, (err, res)=>{ 
-            if(err) return Promise.reject(err);
-
-            SalesforceService.conn.sobject(object).describe((err, res)=> { 
-                if(err) return Promise.reject(err);
-                Promise.resolve(res);
-                SalesforceService.conn.logout();
-            });
-        });
+        try{
+            await SalesforceService.conn.login(process.env.SF_USER, process.env.SF_PASS); 
+            let res = await SalesforceService.conn.sobject(object).describe();
+            SalesforceService.conn.logout();
+            return Promise.resolve({contents: JSON.stringify(res)});
+        } catch(error) {
+            return Promise.reject(error);
+        }
     }
 
     static async search(searchRequest : SearchRequest) {
-        SalesforceService.conn.login(process.env.SF_USER, process.env.SF_PASS, (err, res)=>{ 
-            if(err) return Promise.reject(err);
-
-            SalesforceService.conn.search(`FIND ${searchRequest.search} IN ALL FIELDS RETURNING ${searchRequest.retrieve}`, (err, res) =>{
-                if(err) return Promise.reject(err);
-                res.searchRecords.forEach((el, i)=>{
-                    deepClean(res.searchRecords[i], 'attributes');
-                });
-                Promise.resolve(res);
-                SalesforceService.conn.logout();
-            })
-        });
+        try{
+            await SalesforceService.conn.login(process.env.SF_USER, process.env.SF_PASS);
+            let res = await SalesforceService.conn.search(`FIND ${searchRequest.search} IN ALL FIELDS RETURNING ${searchRequest.retrieve}`);
+            deepClean(res, 'attributes');
+            SalesforceService.conn.logout();
+            return Promise.resolve({contents: JSON.stringify(res)});
+        } catch(error) {
+            return Promise.reject(error);
+        }
     }
 }

@@ -1,7 +1,5 @@
 syntax = "proto3";
 
-import "any.proto";
-
 option java_multiple_files = true;
 option java_package = "org.shingo.sf.services";
 option java_outer_classname = "SalesforceMicroservices";
@@ -30,7 +28,7 @@ service SalesforceMicroservices {
 }
 
 message JSONObject {
-    google.protobuf.Any contents = 1;
+    string contents = 1;
 }
 
 message QueryRequest {
