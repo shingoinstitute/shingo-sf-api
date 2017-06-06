@@ -113,6 +113,7 @@ export class SalesforceMicroservice {
         SalesforceService.search(call.request)
             .then(record => callback(null, record))
             .catch(error => {
+                console.log('Returning error from search(): ', error);
                 const metadata = new grpc.Metadata();
                 metadata.add('error-bin', Buffer.from(JSON.stringify(error)));
                 callback({
