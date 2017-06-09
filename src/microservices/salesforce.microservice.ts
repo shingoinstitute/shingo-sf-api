@@ -57,6 +57,7 @@ export class SalesforceMicroservice {
         SalesforceService.update(call.request)
             .then(record => callback(null, record))
             .catch(error => {
+                console.log('Error in update(): ', error);
                 const metadata = new grpc.Metadata();
                 metadata.add('error-bin', Buffer.from(JSON.stringify(error)));
                 callback({

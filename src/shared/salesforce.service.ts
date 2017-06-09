@@ -1,4 +1,4 @@
-import * as bluebird from 'bluebird';
+import * as _ from 'lodash';
 import * as jsforce from 'jsforce';
 import * as deepClean from 'deep-cleaner';
 
@@ -73,7 +73,19 @@ export class SalesforceService {
 
     static async create(recordsRequest : RecordsRequest) {
         let records = new Array();
-        recordsRequest.records.forEach(record => records.push(JSON.parse(record.contents)));
+        recordsRequest.records.forEach(record => {
+            let newRecord = _.omit(JSON.parse(record.contents), [
+                'LastModifiedDate',
+                'IsDeleted',
+                'LastViewedDate',
+                'LastReferencedDate',
+                'SystemModstamp',
+                'CreatedById',
+                'CreatedDate',
+                'LastModifiedById'
+            ]);
+            records.push(newRecord)
+        });
         try{
             await SalesforceService.conn.login(process.env.SF_USER, process.env.SF_PASS);
             let res = await SalesforceService.conn.sobject(recordsRequest.object).create(records);
@@ -86,7 +98,20 @@ export class SalesforceService {
 
     static async update(recordsRequest : RecordsRequest) {
         let records = new Array();
-        recordsRequest.records.forEach(record => records.push(JSON.parse(record.contents)));
+        recordsRequest.records.forEach(record => {
+            let newRecord = _.omit(JSON.parse(record.contents), [
+                'LastModifiedDate',
+                'IsDeleted',
+                'LastViewedDate',
+                'LastReferencedDate',
+                'SystemModstamp',
+                'CreatedById',
+                'CreatedDate',
+                'LastModifiedById'
+            ]);
+            console.log('Pusing new record', newRecord);
+            records.push(newRecord)
+        });
         try {
             await SalesforceService.conn.login(process.env.SF_USER, process.env.SF_PASS);
             let res = await SalesforceService.conn.sobject(recordsRequest.object).update(records);
