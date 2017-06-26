@@ -30,7 +30,7 @@ if [ -z "$SF_URL" ]; then
     exit 1
 fi
 
-docker build --tag shingo-sf-api:${TAG} .
+docker build --no-cache --tag shingo-sf-api:${TAG} .
 
 # docker network create shingo-dev-net
 

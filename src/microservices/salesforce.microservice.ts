@@ -15,6 +15,7 @@ export class SalesforceMicroservice {
         SalesforceService.query(call.request)
             .then(records => callback(null, records))
             .catch(error => {
+                console.log('Error in query(): ', error);
                 const metadata = new grpc.Metadata();
                 metadata.add('error-bin', Buffer.from(JSON.stringify(error)));
                 callback({
@@ -29,6 +30,7 @@ export class SalesforceMicroservice {
         SalesforceService.retrieve(call.request)
             .then(record => callback(null, record))
             .catch(error => {
+                console.log('Error in retrieve(): ', error);
                 const metadata = new grpc.Metadata();
                 metadata.add('error-bin', Buffer.from(JSON.stringify(error)));
                 callback({

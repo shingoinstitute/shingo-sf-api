@@ -92,6 +92,7 @@ export class SalesforceService {
             SalesforceService.conn.logout();
             return Promise.resolve({contents: JSON.stringify(res)});
         } catch(error) {
+            console.log('Error in SalesforceService.create(): ', error);
             return Promise.reject(error);
         }
     }
@@ -109,7 +110,6 @@ export class SalesforceService {
                 'CreatedDate',
                 'LastModifiedById'
             ]);
-            console.log('Pusing new record', newRecord);
             records.push(newRecord)
         });
         try {
