@@ -4,7 +4,7 @@ import * as grpc from 'grpc';
 const microservice = new SalesforceMicroservice();
 const port = process.env.PORT || 8888;
 
-let server = new grpc.Server({ 'grpc.max_send_message_length': 1000 * 1000 * 1000 * 30, 'grpc.max_receive_message_length': 1000 * 1000 * 1000 * 30 });
+let server = new grpc.Server({ 'grpc.max_send_message_length': 1024 * 1024 * 1024, 'grpc.max_receive_message_length': 1024 * 1024 * 1024 });
 server.addService(microservice.sfServices.SalesforceMicroservices.service, {
     query: microservice.query,
     retrieve: microservice.retrieve,
