@@ -51,7 +51,8 @@ const OMIT_FIELDS = ['LastModifiedDate',
     "Account",
     "Facilitator_For__r",
     "id",
-    "role"
+    "role",
+    "RecordType"
 ]
 
 export class SalesforceService {
