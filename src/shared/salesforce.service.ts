@@ -46,7 +46,13 @@ const OMIT_FIELDS = ['LastModifiedDate',
     'MailingAddress',
     'LastCURequestDate',
     'LastActivityDate',
-    'JigsawContactId']
+    'JigsawContactId',
+    "password",
+    "Account",
+    "Facilitator_For__r",
+    "id",
+    "role"
+]
 
 export class SalesforceService {
     static conn = new jsforce.Connection({ loginUrl: process.env.SF_URL, instanceURL: process.env.SF_ENV });
