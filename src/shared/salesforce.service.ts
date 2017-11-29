@@ -1,3 +1,4 @@
+import { LoggerService } from './logger.service';
 import * as _ from 'lodash';
 import * as jsforce from 'jsforce';
 import * as deepClean from 'deep-cleaner';
@@ -58,6 +59,8 @@ const OMIT_FIELDS = ['LastModifiedDate',
 export class SalesforceService {
     static conn = new jsforce.Connection({ loginUrl: process.env.SF_URL, instanceURL: process.env.SF_ENV });
 
+    static log = new LoggerService();
+
     static async query(queryRequest: QueryRequest) {
         // this.conn = bluebird.promisifyAll(this.conn);
         let queryString = queryRequest.action;
@@ -66,7 +69,7 @@ export class SalesforceService {
         queryString += " FROM " + queryRequest.table;
         if (queryRequest.clauses) queryString += " WHERE " + queryRequest.clauses;
 
-        console.log('DEBUG: Executing SOQL: ', queryString);
+        SalesforceService.log.debug('Executing SOQL: %s', queryString);
         try {
             // Login into Salesforce
             await SalesforceService.conn.login(process.env.SF_USER, process.env.SF_PASS);
@@ -79,7 +82,7 @@ export class SalesforceService {
             return Promise.resolve({ contents: JSON.stringify(res) });
 
         } catch (error) {
-            console.error('Error in SalesforceService.query(): ', error);
+            SalesforceService.log.error('Error in SalesforceService.query(): %j', error);
             return Promise.reject(error);
         }
     }
@@ -110,7 +113,7 @@ export class SalesforceService {
             SalesforceService.conn.logout();
             return Promise.resolve({ contents: JSON.stringify(res) });
         } catch (error) {
-            console.log('Error in SalesforceService.create(): ', error);
+            SalesforceService.log.error('Error in SalesforceService.create(): %j', error);
             return Promise.reject(error);
         }
     }
