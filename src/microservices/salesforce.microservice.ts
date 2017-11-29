@@ -15,7 +15,7 @@ export class SalesforceMicroservice {
         SalesforceService.query(call.request)
             .then(records => callback(null, records))
             .catch(error => {
-                console.log('Error in query(): ', error);
+                SalesforceService.log.error('Error in query(): %j', error);
                 const metadata = new grpc.Metadata();
                 metadata.add('error-bin', Buffer.from(JSON.stringify(error)));
                 callback({
@@ -30,7 +30,7 @@ export class SalesforceMicroservice {
         SalesforceService.retrieve(call.request)
             .then(record => callback(null, record))
             .catch(error => {
-                console.log('Error in retrieve(): ', error);
+                SalesforceService.log.error('Error in retrieve(): %j', error);
                 const metadata = new grpc.Metadata();
                 metadata.add('error-bin', Buffer.from(JSON.stringify(error)));
                 callback({
@@ -45,6 +45,7 @@ export class SalesforceMicroservice {
         SalesforceService.create(call.request)
             .then(record => callback(null, record))
             .catch(error => {
+                SalesforceService.log.error('Error in create(): %j', error);
                 const metadata = new grpc.Metadata();
                 metadata.add('error-bin', Buffer.from(JSON.stringify(error)));
                 callback({
@@ -59,7 +60,7 @@ export class SalesforceMicroservice {
         SalesforceService.update(call.request)
             .then(record => callback(null, record))
             .catch(error => {
-                console.log('Error in update(): ', error);
+                SalesforceService.log.error('Error in update(): %j', error);
                 const metadata = new grpc.Metadata();
                 metadata.add('error-bin', Buffer.from(JSON.stringify(error)));
                 callback({
@@ -74,6 +75,7 @@ export class SalesforceMicroservice {
         SalesforceService.delete(call.request)
             .then(record => callback(null, record))
             .catch(error => {
+                SalesforceService.log.error('Error in delete(): %j', error);
                 const metadata = new grpc.Metadata();
                 metadata.add('error-bin', Buffer.from(JSON.stringify(error)));
                 callback({
@@ -88,6 +90,7 @@ export class SalesforceMicroservice {
         SalesforceService.upsert(call.request)
             .then(record => callback(null, record))
             .catch(error => {
+                SalesforceService.log.error('Error in upsert(): %j', error);
                 const metadata = new grpc.Metadata();
                 metadata.add('error-bin', Buffer.from(JSON.stringify(error)));
                 callback({
@@ -102,6 +105,7 @@ export class SalesforceMicroservice {
         SalesforceService.describe(call.request.object)
             .then(record => callback(null, record))
             .catch(error => {
+                SalesforceService.log.error('Error in describe(): %j', error);
                 const metadata = new grpc.Metadata();
                 metadata.add('error-bin', Buffer.from(JSON.stringify(error)));
                 callback({
@@ -116,7 +120,7 @@ export class SalesforceMicroservice {
         SalesforceService.search(call.request)
             .then(record => callback(null, record))
             .catch(error => {
-                console.log('Returning error from search(): ', error);
+                SalesforceService.log.error('Returning error from search(): %j', error);
                 const metadata = new grpc.Metadata();
                 metadata.add('error-bin', Buffer.from(JSON.stringify(error)));
                 callback({

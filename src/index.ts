@@ -1,5 +1,6 @@
 import { SalesforceMicroservice } from './microservices/salesforce.microservice';
 import * as grpc from 'grpc';
+import { LoggerService } from './shared/logger.service';
 
 const microservice = new SalesforceMicroservice();
 const port = process.env.PORT || 8888;
@@ -18,4 +19,4 @@ server.addService(microservice.sfServices.SalesforceMicroservices.service, {
 
 server.bind(`0.0.0.0:${port}`, grpc.ServerCredentials.createInsecure());
 server.start();
-console.log(`SalesforceMicroservice is listening on port ${port}.`)
+new LoggerService().info(`SalesforceMicroservice is listening on port ${port}.`)
