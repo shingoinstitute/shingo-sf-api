@@ -61,6 +61,8 @@ export class SalesforceService {
 
     static log = new LoggerService();
 
+    static auditLog = new LoggerService('salesforce-api.audit.log');
+
     static async query(queryRequest: QueryRequest) {
         // this.conn = bluebird.promisifyAll(this.conn);
         let queryString = queryRequest.action;
@@ -105,12 +107,13 @@ export class SalesforceService {
         let records = new Array();
         recordsRequest.records.forEach(record => {
             let newRecord = _.omit(JSON.parse(record.contents), OMIT_FIELDS);
-            records.push(newRecord)
+            records.push(newRecord);
         });
         try {
             await SalesforceService.conn.login(process.env.SF_USER, process.env.SF_PASS);
             let res = await SalesforceService.conn.sobject(recordsRequest.object).create(records);
             SalesforceService.conn.logout();
+            SalesforceService.auditLog.warn('Creating new records: %j', records);
             return Promise.resolve({ contents: JSON.stringify(res) });
         } catch (error) {
             SalesforceService.log.error('Error in SalesforceService.create(): %j', error);
@@ -128,6 +131,7 @@ export class SalesforceService {
             await SalesforceService.conn.login(process.env.SF_USER, process.env.SF_PASS);
             let res = await SalesforceService.conn.sobject(recordsRequest.object).update(records);
             SalesforceService.conn.logout();
+            SalesforceService.auditLog.warn('Updating records: %j', records);
             return Promise.resolve({ contents: JSON.stringify(res) });
         } catch (error) {
             return Promise.reject(error);
@@ -139,6 +143,7 @@ export class SalesforceService {
             await SalesforceService.conn.login(process.env.SF_USER, process.env.SF_PASS);
             let res = await SalesforceService.conn.sobject(idRequest.object).delete(idRequest.ids);
             SalesforceService.conn.logout();
+            SalesforceService.auditLog.warn('Deleting records: %j', idRequest.ids);
             return Promise.resolve({ contents: JSON.stringify(res) });
         } catch (error) {
             return Promise.reject(error);
