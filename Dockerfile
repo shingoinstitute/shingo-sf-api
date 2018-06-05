@@ -1,25 +1,18 @@
-FROM node
+FROM keymetrics/pm2:latest-alpine
 
-WORKDIR /code
+# Bundle APP files
+COPY src src/
+COPY package.json .
+COPY package-lock.json .
+COPY tsconfig.json .
+COPY pm2.json .
 
-COPY .dockerignore .dockerignore
-
-COPY package.json package.json
-
-COPY package-lock.json package-lock.json
-
-COPY tsconfig.json tsconfig.json
-
-RUN npm install -g typescript nodemon
-
+ENV NPM_CONFIG_LOGLEVEL warn
 RUN npm install
-
-RUN tsc
+RUN npm run-script compile
 
 ENV PORT=80
 
 EXPOSE 80
 
-ENTRYPOINT ["npm", "run"]
-
-CMD ["start"]
+CMD ["pm2-runtime", "start", "pm2.json"]

@@ -23,7 +23,7 @@ export class LoggerService {
     constructor(logName?: string) {
         let logPath: string = process.env.LOG_PATH || '';
         logName = logName || process.env.LOG_FILE || 'salesforce-api.log';
-        let logLevel: Level = process.env.LOG_LEVEL || 'silly';
+        let logLevel = process.env.LOG_LEVEL as Level || 'silly';
 
         const logTransports = [
             new transports.Console({ colorize: true, prettyPrint: true, timestamp: true }),
@@ -38,14 +38,14 @@ export class LoggerService {
     /**
      * The log function is multipurpse
      * 
-     * @param {Level} level - NPM Logging levels (<code>'error' | 'warn' | 'info' | 'verbose' | 'debug' | 'silly'</code>)
-     * @param {string} message - The message to print. May include one formatting operator (i.e. 'my object: %j')
-     * @param {any} [meta] - The value to insert into message with formatting operator
+     * @param level - NPM Logging levels (<code>'error' | 'warn' | 'info' | 'verbose' | 'debug' | 'silly'</code>)
+     * @param message - The message to print. May include one formatting operator (i.e. 'my object: %j')
+     * @param [meta] - The value to insert into message with formatting operator
      * @returns {LoggerInstance} 
      * @memberof LoggerService
      */
-    public log(level: Level, message: string, meta?): LoggerInstance {
-        return this.logger.log(level, message, meta);
+    public log(level: Level, message: string, ...meta: any[]): LoggerInstance {
+        return this.logger.log(level, message, ...meta);
     }
 
     /**
@@ -56,8 +56,8 @@ export class LoggerService {
      * @returns {LoggerInstance} 
      * @memberof LoggerService
      */
-    public silly(message: string, meta?): LoggerInstance {
-        return this.logger.silly(message, meta);
+    public silly(message: string, ...meta: any[]): LoggerInstance {
+        return this.logger.silly(message, ...meta);
     }
 
     /**
@@ -68,8 +68,8 @@ export class LoggerService {
      * @returns {LoggerInstance} 
      * @memberof LoggerService
      */
-    public debug(message: string, meta?): LoggerInstance {
-        return this.logger.debug(message, meta);
+    public debug(message: string, ...meta: any[]): LoggerInstance {
+        return this.logger.debug(message, ...meta);
     }
 
     /**
@@ -80,8 +80,8 @@ export class LoggerService {
      * @returns {LoggerInstance} 
      * @memberof LoggerService
      */
-    public verbose(message: string, meta?): LoggerInstance {
-        return this.logger.verbose(message, meta);
+    public verbose(message: string, ...meta: any[]): LoggerInstance {
+        return this.logger.verbose(message, ...meta);
     }
 
     /**
@@ -92,8 +92,8 @@ export class LoggerService {
      * @returns {LoggerInstance} 
      * @memberof LoggerService
      */
-    public info(message: string, meta?): LoggerInstance {
-        return this.logger.info(message, meta);
+    public info(message: string, ...meta: any[]): LoggerInstance {
+        return this.logger.info(message, ...meta);
     }
 
     /**
@@ -104,8 +104,8 @@ export class LoggerService {
      * @returns {LoggerInstance} 
      * @memberof LoggerService
      */
-    public warn(message: string, meta?): LoggerInstance {
-        return this.logger.warn(message, meta);
+    public warn(message: string, ...meta: any[]): LoggerInstance {
+        return this.logger.warn(message, ...meta);
     }
 
     /**
@@ -116,8 +116,8 @@ export class LoggerService {
      * @returns {LoggerInstance} 
      * @memberof LoggerService
      */
-    public error(message: string, meta?): LoggerInstance {
-        return this.logger.error(message, meta);
+    public error(message: string, ...meta: any[]): LoggerInstance {
+        return this.logger.error(message, ...meta);
     }
 
 }

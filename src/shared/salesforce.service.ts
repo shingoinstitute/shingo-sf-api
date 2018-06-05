@@ -1,7 +1,7 @@
 import { LoggerService } from './logger.service';
-import * as _ from 'lodash';
 import * as jsforce from 'jsforce';
-import * as deepClean from 'deep-cleaner';
+import deepClean = require('deep-cleaner');
+import { omit } from '../util';
 
 export interface QueryRequest {
     action: string,
@@ -21,6 +21,12 @@ export interface JSONObject {
 
 export interface RecordsRequest {
     object: string,
+    records: JSONObject[]
+}
+
+export interface UpsertRequest {
+    object: string
+    id: string
     records: JSONObject[]
 }
 
@@ -56,8 +62,18 @@ const OMIT_FIELDS = ['LastModifiedDate',
     "RecordType"
 ]
 
+const checkEnv = () => {
+    if (!process.env.SF_USER) throw new Error('Must provide env var SF_USER');
+    if (!process.env.SF_PASS) throw new Error('Must provide env var SF_PASS');
+}
+
+const login = async () => {
+    checkEnv();
+    await SalesforceService.conn.login(process.env.SF_USER!, process.env.SF_PASS!)
+}
+
 export class SalesforceService {
-    static conn = new jsforce.Connection({ loginUrl: process.env.SF_URL, instanceURL: process.env.SF_ENV });
+    static conn = new jsforce.Connection({ loginUrl: process.env.SF_URL, instanceUrl: process.env.SF_ENV });
 
     static log = new LoggerService();
 
@@ -74,7 +90,7 @@ export class SalesforceService {
         SalesforceService.log.debug('Executing SOQL: %s', queryString);
         try {
             // Login into Salesforce
-            await SalesforceService.conn.login(process.env.SF_USER, process.env.SF_PASS);
+            await login();
 
             // Execute query
             let records = new Array()
@@ -92,7 +108,8 @@ export class SalesforceService {
     static async retrieve(idRequest: IdRequest) {
         try {
             // Login to Salesforce
-            await SalesforceService.conn.login(process.env.SF_USER, process.env.SF_PASS);
+            await login();
+
             // Retrieve records for given object and ids
             let res = await SalesforceService.conn.sobject(idRequest.object).retrieve(idRequest.ids);
             deepClean(res, 'attributes');
@@ -106,11 +123,12 @@ export class SalesforceService {
     static async create(recordsRequest: RecordsRequest) {
         let records = new Array();
         recordsRequest.records.forEach(record => {
-            let newRecord = _.omit(JSON.parse(record.contents), OMIT_FIELDS);
+            let newRecord = omit(JSON.parse(record.contents), OMIT_FIELDS);
             records.push(newRecord);
         });
         try {
-            await SalesforceService.conn.login(process.env.SF_USER, process.env.SF_PASS);
+            await login();
+
             let res = await SalesforceService.conn.sobject(recordsRequest.object).create(records);
             SalesforceService.conn.logout();
             SalesforceService.auditLog.warn('Creating new records: %j', records);
@@ -124,11 +142,12 @@ export class SalesforceService {
     static async update(recordsRequest: RecordsRequest) {
         let records = new Array();
         recordsRequest.records.forEach(record => {
-            let newRecord = _.omit(JSON.parse(record.contents), OMIT_FIELDS);
+            let newRecord = omit(JSON.parse(record.contents), OMIT_FIELDS);
             records.push(newRecord)
         });
         try {
-            await SalesforceService.conn.login(process.env.SF_USER, process.env.SF_PASS);
+            await login();
+
             let res = await SalesforceService.conn.sobject(recordsRequest.object).update(records);
             SalesforceService.conn.logout();
             SalesforceService.auditLog.warn('Updating records: %j', records);
@@ -140,7 +159,8 @@ export class SalesforceService {
 
     static async delete(idRequest: IdRequest) {
         try {
-            await SalesforceService.conn.login(process.env.SF_USER, process.env.SF_PASS);
+            await login();
+
             let res = await SalesforceService.conn.sobject(idRequest.object).delete(idRequest.ids);
             SalesforceService.conn.logout();
             SalesforceService.auditLog.warn('Deleting records: %j', idRequest.ids);
@@ -150,10 +170,12 @@ export class SalesforceService {
         }
     }
 
-    static async upsert(recordsRequest: RecordsRequest) {
+    static async upsert(recordsRequest: UpsertRequest) {
         try {
-            await SalesforceService.conn.login(process.env.SF_USER, process.env.SF_PASS)
-            let res = await SalesforceService.conn.sobject(recordsRequest.object).upsert(recordsRequest.records);
+            await login();
+
+            const obj = SalesforceService.conn.sobject(recordsRequest.object)
+            let res = await SalesforceService.conn.sobject(recordsRequest.object).upsert(recordsRequest.records as any, recordsRequest.id);
             SalesforceService.conn.logout();
             return Promise.resolve({ contents: JSON.stringify(res) });
         } catch (error) {
@@ -163,7 +185,8 @@ export class SalesforceService {
 
     static async describe(object: string) {
         try {
-            await SalesforceService.conn.login(process.env.SF_USER, process.env.SF_PASS);
+            await login();
+
             let res = await SalesforceService.conn.sobject(object).describe();
             SalesforceService.conn.logout();
             return Promise.resolve({ contents: JSON.stringify(res) });
@@ -174,8 +197,9 @@ export class SalesforceService {
 
     static async search(searchRequest: SearchRequest) {
         try {
-            await SalesforceService.conn.login(process.env.SF_USER, process.env.SF_PASS);
-            let res = await SalesforceService.conn.search(`FIND ${searchRequest.search} IN ALL FIELDS RETURNING ${searchRequest.retrieve}`);
+            await login();
+
+            let res = await (SalesforceService.conn as any).search(`FIND ${searchRequest.search} IN ALL FIELDS RETURNING ${searchRequest.retrieve}`);
             deepClean(res, 'attributes');
             SalesforceService.conn.logout();
             return Promise.resolve({ contents: JSON.stringify(res) });

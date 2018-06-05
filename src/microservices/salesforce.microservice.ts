@@ -4,14 +4,14 @@ import { SalesforceService } from '../shared/salesforce.service';
 
 export class SalesforceMicroservice {
 
-    public sfServices;
+    public sfServices: Record<string, any>;
 
     constructor(protoPath? : string) {
         if(protoPath === undefined) protoPath = path.join(__dirname, '../proto/sf_services.proto');
         this.sfServices = grpc.load(protoPath).sfservices;
     }
 
-    query(call, callback){
+    query(call: any, callback: any){
         SalesforceService.query(call.request)
             .then(records => callback(null, records))
             .catch(error => {
@@ -26,7 +26,7 @@ export class SalesforceMicroservice {
             });
     }
 
-    retrieve(call, callback){
+    retrieve(call: any, callback: any){
         SalesforceService.retrieve(call.request)
             .then(record => callback(null, record))
             .catch(error => {
@@ -41,7 +41,7 @@ export class SalesforceMicroservice {
             });
     }
 
-    create(call, callback){
+    create(call: any, callback: any){
         SalesforceService.create(call.request)
             .then(record => callback(null, record))
             .catch(error => {
@@ -56,7 +56,7 @@ export class SalesforceMicroservice {
             });
     }
 
-    update(call, callback){
+    update(call: any, callback: any){
         SalesforceService.update(call.request)
             .then(record => callback(null, record))
             .catch(error => {
@@ -71,7 +71,7 @@ export class SalesforceMicroservice {
             });
     }
 
-    delete(call, callback){
+    delete(call: any, callback: any){
         SalesforceService.delete(call.request)
             .then(record => callback(null, record))
             .catch(error => {
@@ -86,7 +86,7 @@ export class SalesforceMicroservice {
             });
     }
 
-    upsert(call, callback){
+    upsert(call: any, callback: any){
         SalesforceService.upsert(call.request)
             .then(record => callback(null, record))
             .catch(error => {
@@ -101,7 +101,7 @@ export class SalesforceMicroservice {
             });
     }
 
-    describe(call, callback){
+    describe(call: any, callback: any){
         SalesforceService.describe(call.request.object)
             .then(record => callback(null, record))
             .catch(error => {
@@ -116,7 +116,7 @@ export class SalesforceMicroservice {
             });
     }
 
-    search(call, callback){
+    search(call: any, callback: any){
         SalesforceService.search(call.request)
             .then(record => callback(null, record))
             .catch(error => {
