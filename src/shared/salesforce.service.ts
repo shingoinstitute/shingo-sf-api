@@ -57,7 +57,7 @@ const OMIT_FIELDS = ['LastModifiedDate',
 ]
 
 export class SalesforceService {
-    static conn = new jsforce.Connection({ loginUrl: process.env.SF_URL, instanceURL: process.env.SF_ENV });
+    static conn = new jsforce.Connection({ loginUrl: process.env.SF_URL, instanceUrl: process.env.SF_ENV });
 
     static log = new LoggerService();
 

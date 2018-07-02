@@ -1,25 +1,12 @@
-FROM node
-
-WORKDIR /code
-
-COPY .dockerignore .dockerignore
-
-COPY package.json package.json
-
-COPY package-lock.json package-lock.json
-
-COPY tsconfig.json tsconfig.json
-
-RUN npm install -g typescript nodemon
-
-RUN npm install
-
-RUN tsc
-
-ENV PORT=80
-
+FROM node:8.9
+ENV NODE_ENV production
+WORKDIR /usr/src/app
+COPY ["package.json", "package-lock.json*", "npm-shrinkwrap.json*", "./"]
+RUN npm install --production --silent
+COPY . .
+RUN npm run build
+ENV PORT 80
+ENV LOG_FILE shingo-sf-api.log
+ENV LOG_LEVEL info
 EXPOSE 80
-
-ENTRYPOINT ["npm", "run"]
-
-CMD ["start"]
+CMD npm start
