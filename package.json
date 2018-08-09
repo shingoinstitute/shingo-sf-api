@@ -1,24 +1,40 @@
 {
-  "name": "shingo-sf-api",
-  "version": "1.0.0",
+  "name": "@shingo/shingo-sf-api",
+  "version": "1.0.0-beta-1",
   "description": "Interface with our SF instance.",
   "main": "index.js",
+  "bin": {
+    "shingo-sf-api-server": "./server/app.js"
+  },
   "dependencies": {
-    "@types/express": "^4.0.35",
-    "@types/node": "^7.0.18",
+    "@grpc/proto-loader": "^0.3.0",
     "deep-cleaner": "^1.1.2",
-    "grpc": "^1.12.4",
-    "jsforce": "^1.8.4",
+    "grpc": "^1.13.1",
+    "jsforce": "^1.9.0",
     "lodash": "^4.17.10",
-    "typescript": "^2.9.2",
     "winston": "^2.4.0"
   },
   "scripts": {
-    "start": "node ./build/index.js",
-    "proto": "mkdir -p build/proto && cp src/microservices/*.proto build/proto/",
-    "build": "npm run proto && tsc -p ./tsconfig.json",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node ./build/server/app.js",
+    "debug": "nodemon --watch ./build --inspect=0.0.0.0:9229 --nolazy ./build/server/app.js",
+    "docker-debug": "docker-compose -f docker-compose.debug.yml up",
+    "proto": "mkdir -p build/proto && cp -R src/proto build/",
+    "build": "rm -rf build/* && npm run proto && tsc -p ./tsconfig.json",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "lint": "tslint -p . -c tslint.json"
   },
+  "private": true,
   "author": "Dustin E. Homan",
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {
+    "@shingo/tslint-rules": "^1.0.0",
+    "@types/jsforce": "^1.8.13",
+    "@types/lodash": "^4.14.116",
+    "@types/node": "^10.5.5",
+    "@types/winston": "^2.3.9",
+    "nodemon": "^1.18.3",
+    "ts-node": "^7.0.0",
+    "tslint": "^5.11.0",
+    "typescript": "^3.0.1"
+  }
 }

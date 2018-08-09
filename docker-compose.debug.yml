@@ -1,12 +1,29 @@
-version: '2.1'
+version: '3.4'
 
 services:
   shingo-sf-api:
-    image: shingo-sf-api
-    build: .
+    image: docker.shingo.org/shingo-sf-api:local
+    build:
+      context: .
+      target: debug
     environment:
       NODE_ENV: development
+      SF_ENV:
+      SF_URL:
+      SF_USER:
+      SF_PASS:
+    networks:
+      shingo-dev-net:
+        aliases:
+          - "shingo-sf-api"
+      default:
+    volumes:
+      - ./build:/build
     ports:
-      - 80:80
-      - 9229:9229
-    command: node --inspect=0.0.0.0:9229 ./build/index.js
+      - "${PORT:-8080}:80"
+      - "${INSPECT_PORT:-9229}:9229"
+    command: npm run debug
+
+networks:
+  shingo-dev-net:
+    external: true
