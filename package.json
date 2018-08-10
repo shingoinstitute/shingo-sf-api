@@ -20,11 +20,10 @@
     "debug": "nodemon --watch ./build --inspect=0.0.0.0:9229 --nolazy ./build/server/app.js",
     "docker-debug": "docker-compose -f docker-compose.debug.yml up",
     "proto": "mkdir -p build/proto && cp -R src/proto build/",
-    "build": "rm -rf build/* && npm run proto && tsc -p ./tsconfig.json",
+    "build": "rm -rf build/* && npm run proto && tsc -p ./tsconfig.json && ./scripts/prepublish.sh",
     "test": "echo \"Error: no test specified\" && exit 1",
     "lint": "tslint -p . -c tslint.json"
   },
-  "private": true,
   "author": "Dustin E. Homan",
   "license": "MIT",
   "devDependencies": {
