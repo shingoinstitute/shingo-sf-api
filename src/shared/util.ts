@@ -4,6 +4,8 @@ import { LoggerInstance } from 'winston'
 import { RecordsRequest, JSONObject } from './messages'
 import _ from 'lodash'
 
+export type Omit<T, K> = Pick<T, Exclude<keyof T, K>>
+
 /**
  * Authenticates a connection to salesforce and calls a function with the logged in connection
  * @param username Salesforce username
@@ -56,3 +58,47 @@ export const getRecords = (req: RecordsRequest, omit: string[] = []) =>
 /** Packages a response into a JSONObject */
 // tslint:disable-next-line:variable-name
 export const jsonobject = (x: any): JSONObject => ({ contents: JSON.stringify(x) })
+
+export const unjsonobject = (x: JSONObject) => JSON.parse(x.contents)
+
+/**
+ * Binds all methods on an object using Proxy
+ * from https://ponyfoo.com/articles/binding-methods-to-class-instance-objects
+ * @param obj The object
+ */
+export const bindAll = <T extends object>(obj: T): T => {
+  const cache = new WeakMap()
+  const handler: ProxyHandler<T> = {
+    get(target, key) {
+      const value = Reflect.get(target, key)
+      if (typeof value !== 'function') {
+        return value
+      }
+      if (!cache.has(value)) {
+        cache.set(value, value.bind(target))
+      }
+      return cache.get(value)
+    },
+  }
+  return new Proxy(obj, handler)
+}
+
+const removeKey = (o: any) => (key: keyof any) => {
+  if (_.isObject(o)) {
+    Object.keys(o).forEach(k => {
+      if (k === key) {
+        delete o[k]
+      } else if (_.isObject(o[k])) {
+        // for very deep objects this could cause the stack to overflow
+        // but this did not occur ever when using the deep-clean library
+        removeKey(o[k])(key)
+      }
+    })
+  }
+}
+
+export const deepClean = <T extends object, K extends keyof any>(o: T, ...keys: K[]): Omit<T, K> => {
+  const newObj = _.cloneDeep(o)
+  keys.forEach(removeKey(newObj))
+  return newObj
+}

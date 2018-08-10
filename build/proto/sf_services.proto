@@ -52,7 +52,7 @@ message RecordsRequest {
 
 message UpsertRequest {
   string object = 1;
-  repeated google.protobuf.Struct records = 2;
+  repeated JSONObject records = 2;
   string extId = 3;
 }
 

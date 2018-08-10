@@ -1,7 +1,6 @@
 import { loggerFactory } from '../shared/logger.service'
 import * as jsforce from 'jsforce'
-import deepClean from 'deep-cleaner'
-import { runQuery, getRecords, jsonobject } from '../shared/util'
+import { runQuery, getRecords, jsonobject, deepClean } from '../shared/util'
 import { QueryRequest, IdRequest, RecordsRequest,
   UpsertRequest, SearchRequest, JSONObject } from '../shared/messages'
 
@@ -63,9 +62,7 @@ export class SalesforceService {
       this.log.debug('Executing SOQL: %s', queryString)
       return this.queryRunner(async conn => {
         const res = await conn.query(queryString)
-        // TODO: remove deepClean once I can verify it doesn't change functionality
-        deepClean(res, 'attributes')
-        return jsonobject(res)
+        return jsonobject(deepClean(res, 'attributes'))
       })
     } catch (error) {
       this.log.error('Error in SalesforceService.query(): %j', error)
@@ -77,8 +74,7 @@ export class SalesforceService {
     try {
       return this.queryRunner(async conn => {
         const res = await conn.sobject(idRequest.object).retrieve(idRequest.ids)
-        deepClean(res, 'attributes')
-        return jsonobject(res)
+        return jsonobject(deepClean(res, 'attributes'))
       })
     } catch (error) {
       this.log.error('Error in SalesforceService.retrieve(): %j', error)
@@ -117,7 +113,7 @@ export class SalesforceService {
     try {
       return this.queryRunner(conn => {
           this.auditLog.info('Deleting records: %j', idRequest.ids)
-          // jsforce typings arent up to date
+          // FIXME: jsforce typings arent up to date
         ; return (conn.sobject(idRequest.object).delete(idRequest.ids) as any as Promise<JSONObject>).then(jsonobject)
       })
     } catch (error) {
@@ -154,10 +150,10 @@ export class SalesforceService {
   async search(searchRequest: SearchRequest) {
     try {
       return this.queryRunner(async conn => {
+        // FIXME: jsforce typings are incorrect
         // tslint:disable-next-line:max-line-length
-        const res = await (conn as any).search(`FIND ${searchRequest.search} IN ALL FIELDS RETURNING ${searchRequest.retrieve}`)
-        deepClean(res, 'attributes')
-        return jsonobject(res)
+        const res: { searchRecords: any[] } = await (conn as any).search(`FIND ${searchRequest.search} IN ALL FIELDS RETURNING ${searchRequest.retrieve}`)
+        return jsonobject(deepClean(res, 'attributes'))
       })
     } catch (error) {
       this.log.error('Error in SalesforceService.search(): %j', error)

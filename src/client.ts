@@ -2,11 +2,21 @@ import * as path from 'path'
 import * as grpc from 'grpc'
 import { Options as ProtoOptions, loadSync } from '@grpc/proto-loader'
 import { QueryRequest, IdRequest, QueryResponse, RecordsRequest,
-  UpsertRequest, JSONObject, DescribeRequest } from './shared/messages'
+  UpsertRequest, SearchRequest} from './shared/messages'
 import { promisify } from 'util'
+import { ServiceClient } from './server/microservices/salesforce.microservice'
+import { bindAll, unjsonobject } from './shared/util'
+import { DescribeSObjectResult, RecordResult } from 'jsforce'
+
+const throwOnUndefined = <T>(x: T | undefined): T => {
+  if (typeof x === 'undefined') {
+    throw new Error('Response is undefined')
+  }
+  return x
+}
 
 export class SalesforceService {
-  client: any
+  client: ServiceClient
 
   constructor(address: string) {
     const protoFile = path.join(__dirname, './proto', 'sf_services.proto')
@@ -19,42 +29,55 @@ export class SalesforceService {
     }
     const packageDefinition = loadSync(protoFile, options)
     const protoDescriptor = grpc.loadPackageDefinition(packageDefinition).sfservices as grpc.GrpcObject
-    const clientClass = protoDescriptor.SalesforceMicroservice as any
-    this.client = new clientClass(address, grpc.credentials.createInsecure())
+    const clientClass = protoDescriptor.SalesforceMicroservice as typeof grpc.Client
+    this.client = bindAll(new clientClass(address, grpc.credentials.createInsecure()) as ServiceClient)
   }
 
   query<T>(req: QueryRequest): Promise<QueryResponse<T>> {
-    return promisify<QueryRequest, JSONObject>(this.client.query.bind(this.client))(req)
-      .then(res => JSON.parse(res.contents))
+    return promisify(this.client.query)(req)
+      .then(throwOnUndefined)
+      .then(unjsonobject)
   }
 
   retrieve(req: IdRequest): Promise<object> {
-    return promisify<IdRequest, JSONObject>(this.client.retrieve.bind(this.client))(req)
-      .then(res => JSON.parse(res.contents))
+    return promisify(this.client.retrieve)(req)
+      .then(throwOnUndefined)
+      .then(unjsonobject)
   }
 
-  create(req: RecordsRequest): Promise<object> {
-    return promisify<RecordsRequest, JSONObject>(this.client.create.bind(this.client))(req)
-      .then(res => JSON.parse(res.contents))
+  create(req: RecordsRequest): Promise<RecordResult[]> {
+    return promisify(this.client.create)(req)
+      .then(throwOnUndefined)
+      .then(unjsonobject)
   }
 
-  update(req: RecordsRequest) {
-    return promisify<RecordsRequest, JSONObject>(this.client.update.bind(this.client))(req)
-      .then(res => JSON.parse(res.contents))
+  update(req: RecordsRequest): Promise<RecordResult[]> {
+    return promisify(this.client.update)(req)
+      .then(throwOnUndefined)
+      .then(unjsonobject)
   }
 
-  delete(req: IdRequest) {
-    return promisify<IdRequest, JSONObject>(this.client.delete.bind(this.client))(req)
-      .then(res => JSON.parse(res.contents))
+  delete(req: IdRequest): Promise<RecordResult[]> {
+    return promisify(this.client.delete)(req)
+      .then(throwOnUndefined)
+      .then(unjsonobject)
   }
 
-  upsert(req: UpsertRequest) {
-    return promisify<UpsertRequest, JSONObject>(this.client.upsert.bind(this.client))(req)
-      .then(res => JSON.parse(res.contents))
+  upsert(req: UpsertRequest): Promise<RecordResult[]> {
+    return promisify(this.client.upsert)(req)
+      .then(throwOnUndefined)
+      .then(unjsonobject)
   }
 
-  describe(object: string) {
-    return promisify<DescribeRequest, JSONObject>(this.client.upsert.bind(this.client))({ object })
-      .then(res => JSON.parse(res.contents))
+  describe(object: string): Promise<DescribeSObjectResult> {
+    return promisify(this.client.describe)({ object })
+      .then(throwOnUndefined)
+      .then(unjsonobject)
+  }
+
+  search(req: SearchRequest): Promise<{ searchRecords: any[] }> {
+    return promisify(this.client.search)(req)
+      .then(throwOnUndefined)
+      .then(unjsonobject)
   }
 }

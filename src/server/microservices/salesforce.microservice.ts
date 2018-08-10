@@ -26,6 +26,18 @@ export interface ServiceImplementation {
   search: grpc.handleUnaryCall<SearchRequest, JSONObject>
 }
 
+// Ideally this would be generated from proto, but I don't know how to do that
+export interface ServiceClient extends grpc.Client {
+  query(req: QueryRequest, cb: grpc.requestCallback<JSONObject>): void
+  retrieve(req: IdRequest, cb: grpc.requestCallback<JSONObject>): void
+  create(req: RecordsRequest, cb: grpc.requestCallback<JSONObject>): void
+  update(req: RecordsRequest, cb: grpc.requestCallback<JSONObject>): void
+  delete(req: IdRequest, cb: grpc.requestCallback<JSONObject>): void
+  upsert(req: UpsertRequest, cb: grpc.requestCallback<JSONObject>): void
+  describe(req: DescribeRequest, cb: grpc.requestCallback<JSONObject>): void
+  search(req: SearchRequest, cb: grpc.requestCallback<JSONObject>): void
+}
+
 const makeCall = handleUnary(loggerFactory())
 
 export class SalesforceMicroservice implements ServiceImplementation {

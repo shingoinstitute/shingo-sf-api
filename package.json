@@ -8,10 +8,11 @@
   },
   "dependencies": {
     "@grpc/proto-loader": "^0.3.0",
-    "deep-cleaner": "^1.1.2",
+    "@types/jsforce": "^1.8.13",
     "grpc": "^1.13.1",
     "jsforce": "^1.9.0",
     "lodash": "^4.17.10",
+    "protobufjs": "^6.8.8",
     "winston": "^2.4.0"
   },
   "scripts": {
@@ -27,8 +28,7 @@
   "author": "Dustin E. Homan",
   "license": "MIT",
   "devDependencies": {
-    "@shingo/tslint-rules": "^1.0.0",
-    "@types/jsforce": "^1.8.13",
+    "@shingo/tslint-rules": "^1.0.1",
     "@types/lodash": "^4.14.116",
     "@types/node": "^10.5.5",
     "@types/winston": "^2.3.9",
