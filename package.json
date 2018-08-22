@@ -1,8 +1,9 @@
 {
   "name": "@shingo/shingo-sf-api",
-  "version": "1.0.0-beta-1",
+  "version": "1.0.0",
   "description": "Interface with our SF instance.",
   "main": "index.js",
+  "types": "index.d.ts",
   "bin": {
     "shingo-sf-api-server": "./server/app.js"
   },
@@ -20,9 +21,11 @@
     "debug": "nodemon --watch ./build --inspect=0.0.0.0:9229 --nolazy ./build/server/app.js",
     "docker-debug": "docker-compose -f docker-compose.debug.yml up",
     "proto": "mkdir -p build/proto && cp -R src/proto build/",
-    "build": "rm -rf build/* && npm run proto && tsc -p ./tsconfig.json && ./scripts/prepublish.sh",
+    "build": "rm -rf build/* && npm run proto && tsc -p ./tsconfig.json",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "lint": "tslint -p . -c tslint.json"
+    "lint": "tslint -p . -c tslint.json",
+    "prepack": "npm run build && cp -Rav build/* . | ./scripts/parseEmitted.sh build.emit",
+    "postpack": "./scripts/postpack.sh"
   },
   "author": "Dustin E. Homan",
   "license": "MIT",
