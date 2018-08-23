@@ -4,6 +4,10 @@
   "description": "Interface with our SF instance.",
   "main": "index.js",
   "types": "index.d.ts",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/shingoinstitute/shingo-sf-api.git"
+  },
   "bin": {
     "shingo-sf-api-server": "./server/app.js"
   },
