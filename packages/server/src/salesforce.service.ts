@@ -1,8 +1,14 @@
-import { loggerFactory } from '../shared/logger.service'
+import { loggerFactory } from './logger.service'
 import * as jsforce from 'jsforce'
-import { runQuery, getRecords, jsonobject, deepClean } from '../shared/util'
-import { QueryRequest, IdRequest, RecordsRequest,
-  UpsertRequest, SearchRequest, JSONObject } from '../shared/messages'
+import { runQuery, getRecords, deepClean } from './util'
+import {
+  QueryRequest,
+  IdRequest,
+  RecordsRequest,
+  UpsertRequest,
+  SearchRequest,
+  JSONObject,
+} from '@shingo/sf-api-shared'
 
 const OMIT_FIELDS = [
   'LastModifiedDate',
@@ -33,7 +39,6 @@ const OMIT_FIELDS = [
 ]
 
 export class SalesforceService {
-
   private queryRunner: ReturnType<typeof runQuery>
 
   constructor(
@@ -41,28 +46,37 @@ export class SalesforceService {
     SF_ENV: string,
     SF_USER: string,
     SF_PASS: string,
-    private conn = new jsforce.Connection({ loginUrl: SF_URL, instanceUrl: SF_ENV }),
+    private conn = new jsforce.Connection({
+      loginUrl: SF_URL,
+      instanceUrl: SF_ENV,
+    }),
     private log = loggerFactory(),
-    private auditLog = loggerFactory('salesforce-api.audit.log')
+    private auditLog = loggerFactory('salesforce-api.audit.log'),
   ) {
     this.queryRunner = runQuery(SF_USER, SF_PASS, this.conn)
   }
 
   async query(queryRequest: QueryRequest): Promise<JSONObject> {
     try {
-      if (!queryRequest.table || queryRequest.table === '' ||
-        !queryRequest.fields || queryRequest.fields.length === 0) {
+      if (
+        !queryRequest.table ||
+        queryRequest.table === '' ||
+        !queryRequest.fields ||
+        queryRequest.fields.length === 0
+      ) {
         throw new Error('Invalid Query Request')
       }
 
-      let queryString = `SELECT ${queryRequest.fields.join(',')} FROM ${queryRequest.table}`
+      let queryString = `SELECT ${queryRequest.fields.join(',')} FROM ${
+        queryRequest.table
+      }`
 
       if (queryRequest.clauses) queryString += ' WHERE ' + queryRequest.clauses
 
       this.log.debug('Executing SOQL: %s', queryString)
       return this.queryRunner(async conn => {
         const res = await conn.query(queryString)
-        return jsonobject(deepClean(res, 'attributes'))
+        return new JSONObject(deepClean(res, 'attributes'))
       })
     } catch (error) {
       this.log.error('Error in SalesforceService.query(): %j', error)
@@ -74,7 +88,7 @@ export class SalesforceService {
     try {
       return this.queryRunner(async conn => {
         const res = await conn.sobject(idRequest.object).retrieve(idRequest.ids)
-        return jsonobject(deepClean(res, 'attributes'))
+        return new JSONObject(deepClean(res, 'attributes'))
       })
     } catch (error) {
       this.log.error('Error in SalesforceService.retrieve(): %j', error)
@@ -88,7 +102,10 @@ export class SalesforceService {
     try {
       return this.queryRunner(conn => {
         this.auditLog.info('Creating new records: %j', records)
-        return conn.sobject(recordsRequest.object).create(records).then(jsonobject)
+        return conn
+          .sobject(recordsRequest.object)
+          .create(records)
+          .then(o => new JSONObject(o))
       })
     } catch (error) {
       this.log.error('Error in SalesforceService.create(): %j', error)
@@ -101,7 +118,10 @@ export class SalesforceService {
     try {
       return this.queryRunner(conn => {
         this.auditLog.info('Updating records: %j', records)
-        return conn.sobject(recordsRequest.object).update(records).then(jsonobject)
+        return conn
+          .sobject(recordsRequest.object)
+          .update(records)
+          .then(o => new JSONObject(o))
       })
     } catch (error) {
       this.log.error('Error in SalesforceService.update(): %j', error)
@@ -112,9 +132,11 @@ export class SalesforceService {
   async delete(idRequest: IdRequest) {
     try {
       return this.queryRunner(conn => {
-          this.auditLog.info('Deleting records: %j', idRequest.ids)
-          // FIXME: jsforce typings arent up to date
-        ; return (conn.sobject(idRequest.object).delete(idRequest.ids) as any as Promise<JSONObject>).then(jsonobject)
+        this.auditLog.info('Deleting records: %j', idRequest.ids)
+        return conn
+          .sobject(idRequest.object)
+          .delete(idRequest.ids)
+          .then(o => new JSONObject(o))
       })
     } catch (error) {
       this.log.error('Error in SalesforceService.delete(): %j', error)
@@ -128,7 +150,10 @@ export class SalesforceService {
 
       return this.queryRunner(conn => {
         this.auditLog.info('Upsert records for %s: %j', request.object, records)
-        return conn.sobject(request.object).upsert(records, request.extId).then(jsonobject)
+        return conn
+          .sobject(request.object)
+          .upsert(records, request.extId)
+          .then(o => new JSONObject(o))
       })
     } catch (error) {
       this.log.error('Error in SalesforceService.upsert(): %j', error)
@@ -139,7 +164,10 @@ export class SalesforceService {
   async describe(object: string) {
     try {
       return this.queryRunner(conn =>
-        conn.sobject(object).describe().then(jsonobject)
+        conn
+          .sobject(object)
+          .describe()
+          .then(o => new JSONObject(o)),
       )
     } catch (error) {
       this.log.error('Error in SalesforceService.describe(): %j', error)
@@ -152,8 +180,12 @@ export class SalesforceService {
       return this.queryRunner(async conn => {
         // FIXME: jsforce typings are incorrect
         // tslint:disable-next-line:max-line-length
-        const res: { searchRecords: any[] } = await (conn as any).search(`FIND ${searchRequest.search} IN ALL FIELDS RETURNING ${searchRequest.retrieve}`)
-        return jsonobject(deepClean(res, 'attributes'))
+        const res: { searchRecords: any[] } = await (conn as any).search(
+          `FIND ${searchRequest.search} IN ALL FIELDS RETURNING ${
+            searchRequest.retrieve
+          }`,
+        )
+        return new JSONObject(deepClean(res, 'attributes'))
       })
     } catch (error) {
       this.log.error('Error in SalesforceService.search(): %j', error)

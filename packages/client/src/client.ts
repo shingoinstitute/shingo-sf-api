@@ -1,12 +1,18 @@
 import * as path from 'path'
 import * as grpc from 'grpc'
 import { Options as ProtoOptions, loadSync } from '@grpc/proto-loader'
-import { QueryRequest, IdRequest, QueryResponse, RecordsRequest,
-  UpsertRequest, SearchRequest} from './shared/messages'
-import { promisify } from 'util'
-import { ServiceClient } from './server/microservices/salesforce.microservice'
-import { bindAll, unjsonobject } from './shared/util'
-import { DescribeSObjectResult, RecordResult } from 'jsforce'
+import {
+  QueryRequest,
+  IdRequest,
+  RecordsRequest,
+  UpsertRequest,
+  SearchRequest,
+  sfservices,
+} from '@shingo/sf-api-shared'
+import { bindAll, promisifyAll, mapUndefined, unjsonify } from './util'
+// tslint:disable-next-line:no-implicit-dependencies
+import { DescribeSObjectResult, RecordResult, QueryResult } from 'jsforce'
+import { PromisifyAll } from './promisify-fix'
 
 const throwOnUndefined = <T>(x: T | undefined): T => {
   if (typeof x === 'undefined') {
@@ -15,8 +21,10 @@ const throwOnUndefined = <T>(x: T | undefined): T => {
   return x
 }
 
+const unjsonobject = mapUndefined(unjsonify)
+
 export class SalesforceClient {
-  client: ServiceClient
+  client: PromisifyAll<sfservices.SalesforceMicroserviceClient>
 
   constructor(address: string, creds?: grpc.ChannelCredentials) {
     const protoFile = path.join(__dirname, './proto', 'sf_services.proto')
@@ -28,29 +36,37 @@ export class SalesforceClient {
       oneofs: true,
     }
     const packageDefinition = loadSync(protoFile, options)
-    const protoDescriptor = grpc.loadPackageDefinition(packageDefinition).sfservices as grpc.GrpcObject
+    const protoDescriptor = grpc.loadPackageDefinition(packageDefinition)
+      .sfservices as grpc.GrpcObject
     const clientClass = protoDescriptor.SalesforceMicroservice as typeof grpc.Client
-    this.client = bindAll(new clientClass(address, creds || grpc.credentials.createInsecure()) as ServiceClient)
+    this.client = promisifyAll(
+      bindAll(new clientClass(
+        address,
+        creds || grpc.credentials.createInsecure(),
+      ) as sfservices.SalesforceMicroserviceClient),
+    )
   }
 
   /**
    * Query salesforce fields using SOQL SELECT
    * @param req QueryRequest object
    */
-  query<T>(req: QueryRequest): Promise<QueryResponse<T>> {
-    return promisify(this.client.query)(req)
-      .then(throwOnUndefined)
+  query<T>(req: QueryRequest): Promise<QueryResult<T>> {
+    return this.client
+      .Query(req)
       .then(unjsonobject)
+      .then(throwOnUndefined) as Promise<QueryResult<T>>
   }
 
   /**
    * Retrieve salesforce objects by id
    * @param req IdRequest object
    */
-  retrieve(req: IdRequest): Promise<object> {
-    return promisify(this.client.retrieve)(req)
-      .then(throwOnUndefined)
+  retrieve(req: IdRequest): Promise<unknown> {
+    return this.client
+      .Retrieve(req)
       .then(unjsonobject)
+      .then(throwOnUndefined)
   }
 
   /**
@@ -58,9 +74,10 @@ export class SalesforceClient {
    * @param req RecordsRequest object
    */
   create(req: RecordsRequest): Promise<RecordResult[]> {
-    return promisify(this.client.create)(req)
-      .then(throwOnUndefined)
+    return this.client
+      .Create(req)
       .then(unjsonobject)
+      .then(throwOnUndefined) as Promise<RecordResult[]>
   }
 
   /**
@@ -68,9 +85,10 @@ export class SalesforceClient {
    * @param req RecordsRequest object
    */
   update(req: RecordsRequest): Promise<RecordResult[]> {
-    return promisify(this.client.update)(req)
-      .then(throwOnUndefined)
+    return this.client
+      .Update(req)
       .then(unjsonobject)
+      .then(throwOnUndefined) as Promise<RecordResult[]>
   }
 
   /**
@@ -78,9 +96,10 @@ export class SalesforceClient {
    * @param req IdRequest object
    */
   delete(req: IdRequest): Promise<RecordResult[]> {
-    return promisify(this.client.delete)(req)
-      .then(throwOnUndefined)
+    return this.client
+      .Delete(req)
       .then(unjsonobject)
+      .then(throwOnUndefined) as Promise<RecordResult[]>
   }
 
   /**
@@ -88,9 +107,10 @@ export class SalesforceClient {
    * @param req UpsertRequest object
    */
   upsert(req: UpsertRequest): Promise<RecordResult[]> {
-    return promisify(this.client.upsert)(req)
-      .then(throwOnUndefined)
+    return this.client
+      .Upsert(req)
       .then(unjsonobject)
+      .then(throwOnUndefined) as Promise<RecordResult[]>
   }
 
   /**
@@ -98,18 +118,20 @@ export class SalesforceClient {
    * @param object Salesforce object to describe
    */
   describe(object: string): Promise<DescribeSObjectResult> {
-    return promisify(this.client.describe)({ object })
-      .then(throwOnUndefined)
+    return this.client
+      .Describe({ object })
       .then(unjsonobject)
+      .then(throwOnUndefined) as Promise<DescribeSObjectResult>
   }
 
   /**
    * Execute SOSL search
    * @param req SearchRequest object
    */
-  search(req: SearchRequest): Promise<{ searchRecords: any[] }> {
-    return promisify(this.client.search)(req)
-      .then(throwOnUndefined)
+  search(req: SearchRequest): Promise<{ searchRecords: Array<unknown> }> {
+    return this.client
+      .Search(req)
       .then(unjsonobject)
+      .then(throwOnUndefined) as Promise<{ searchRecords: Array<unknown> }>
   }
 }

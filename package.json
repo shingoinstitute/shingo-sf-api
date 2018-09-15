@@ -1,46 +1,23 @@
 {
-  "name": "@shingo/shingo-sf-api",
-  "version": "1.0.0",
-  "description": "Interface with our SF instance.",
-  "main": "index.js",
-  "types": "index.d.ts",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/shingoinstitute/shingo-sf-api.git"
-  },
-  "bin": {
-    "shingo-sf-api-server": "./server/app.js"
-  },
-  "dependencies": {
-    "@grpc/proto-loader": "^0.3.0",
-    "@types/jsforce": "^1.8.13",
-    "grpc": "^1.13.1",
-    "jsforce": "^1.9.0",
-    "lodash": "^4.17.10",
-    "protobufjs": "^6.8.8",
-    "winston": "^2.4.0"
-  },
   "scripts": {
-    "start": "node ./build/server/app.js",
-    "debug": "nodemon --watch ./build --inspect=0.0.0.0:9229 --nolazy ./build/server/app.js",
-    "docker-debug": "docker-compose -f docker-compose.debug.yml up",
-    "proto": "mkdir -p build/proto && cp -R src/proto build/",
-    "build": "rm -rf build/* && npm run proto && tsc -p ./tsconfig.json",
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "lint": "tslint -p . -c tslint.json",
-    "prepack": "npm run build && cp -Rav build/* . | ./scripts/parseEmitted.sh build.emit",
-    "postpack": "./scripts/postpack.sh"
+    "fix": "run-s fix:*",
+    "fix:prettier": "prettier \"packages/**/*.ts\" --write",
+    "fix:tslint": "tslint --fix -p packages",
+    "build": "run-s build:*",
+    "build:proto": "proto2ts proto/sf_services.proto > packages/shared/src/sf_services.proto.ts",
+    "build:packages": "for p in packages/*; do [ -d \"$p\" ] && cd \"$p\" && npm run build; cd -; done",
+    "build:tsc": "tsc -b packages",
+    "test": "run-s build test:*",
+    "test:lint": "prettier \"packages/**/*.ts\" --list-different"
   },
-  "author": "Dustin E. Homan",
-  "license": "MIT",
   "devDependencies": {
     "@shingo/tslint-rules": "^1.0.1",
-    "@types/lodash": "^4.14.116",
-    "@types/node": "^10.5.5",
-    "@types/winston": "^2.3.9",
-    "nodemon": "^1.18.3",
-    "ts-node": "^7.0.0",
+    "lerna": "^3.3.2",
+    "npm-run-all": "^4.1.3",
+    "prettier": "^1.14.2",
+    "trash-cli": "^1.4.0",
     "tslint": "^5.11.0",
-    "typescript": "^3.0.1"
+    "tslint-config-prettier": "^1.15.0",
+    "typescript": "^3.0.3"
   }
 }

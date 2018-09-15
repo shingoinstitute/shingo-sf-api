@@ -1,11 +1,18 @@
 #!/usr/bin/env node
 import { SalesforceMicroservice } from './microservices/salesforce.microservice'
 import * as grpc from 'grpc'
-import { loggerFactory } from '../shared/logger.service'
+import { loggerFactory } from './logger.service'
 
 const globalLogger = loggerFactory()
 
-if (!(process.env.SF_ENV && process.env.SF_URL && process.env.SF_USER && process.env.SF_PASS)) {
+if (
+  !(
+    process.env.SF_ENV &&
+    process.env.SF_URL &&
+    process.env.SF_USER &&
+    process.env.SF_PASS
+  )
+) {
   globalLogger.error('Missing environment variables')
   process.exit(1)
 }
