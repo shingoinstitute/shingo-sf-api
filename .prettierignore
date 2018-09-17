@@ -2,3 +2,4 @@
 *.proto
 !packages/**/*.json
 **/*.proto.ts
+packages/*/build
