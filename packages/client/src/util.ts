@@ -1,6 +1,9 @@
 import { PromisifyAll } from './promisify-fix'
 import { promisify } from 'util'
-import { sfservices as M } from '@shingo/sf-api-shared'
+import { sfservices as M, toClass } from '@shingo/sf-api-shared'
+import { ServiceError } from 'grpc'
+// tslint:disable-next-line:no-implicit-dependencies
+import { ErrorResult, SuccessResult, RecordResult } from 'jsforce'
 
 /**
  * Binds all methods on an object using Proxy
@@ -50,4 +53,48 @@ export const promisifyAll = <T extends object>(obj: T): PromisifyAll<T> => {
   }
 
   return new Proxy(obj, handler) as any
+}
+
+const flatten = <T>(arr: T[][]) => arr.reduce((p, c) => [...p, ...c], [])
+
+export const parseError = (err: ServiceError) => {
+  const errorMeta = err.metadata && err.metadata.get('error-bin')
+  const parsedErrorMeta =
+    errorMeta && errorMeta.map(e => JSON.parse(e.toString()))
+
+  if (parsedErrorMeta && parsedErrorMeta.length > 0) {
+    throw toClass(Error)(parsedErrorMeta[0])
+  }
+
+  throw err
+}
+
+export class SalesforceMutateError extends Error {
+  name = 'SalesforceMutateError'
+  errors: Array<
+    string | { statusCode?: string; message?: string; fields?: string[] }
+  >
+  success: string[]
+  constructor(
+    errors: ErrorResult[],
+    success: SuccessResult[],
+    message?: string,
+  ) {
+    super(message)
+    this.errors = flatten(errors.map(e => e.errors))
+    this.success = success.map(s => s.id)
+  }
+}
+
+export const handleRecordResults = (message?: string) => (
+  rs: RecordResult[],
+): SuccessResult[] => {
+  const fails = rs.filter((r): r is ErrorResult => !r.success)
+  const success = rs.filter((r): r is SuccessResult => r.success)
+
+  if (fails.length > 0) {
+    throw new SalesforceMutateError(fails, success, message)
+  }
+
+  return rs as SuccessResult[]
 }

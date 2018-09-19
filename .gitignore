@@ -80,3 +80,4 @@ docs
 yarn.lock
 coverage.*
 *.env
+*.proto.ts

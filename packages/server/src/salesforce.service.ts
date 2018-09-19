@@ -1,4 +1,4 @@
-import { loggerFactory } from './logger.service'
+import { loggerFactory } from './logger.factory'
 import * as jsforce from 'jsforce'
 import { runQuery, getRecords, deepClean } from './util'
 import {
@@ -58,15 +58,6 @@ export class SalesforceService {
 
   async query(queryRequest: QueryRequest): Promise<JSONObject> {
     try {
-      if (
-        !queryRequest.table ||
-        queryRequest.table === '' ||
-        !queryRequest.fields ||
-        queryRequest.fields.length === 0
-      ) {
-        throw new Error('Invalid Query Request')
-      }
-
       let queryString = `SELECT ${queryRequest.fields.join(',')} FROM ${
         queryRequest.table
       }`
@@ -179,7 +170,6 @@ export class SalesforceService {
     try {
       return this.queryRunner(async conn => {
         // FIXME: jsforce typings are incorrect
-        // tslint:disable-next-line:max-line-length
         const res: { searchRecords: any[] } = await (conn as any).search(
           `FIND ${searchRequest.search} IN ALL FIELDS RETURNING ${
             searchRequest.retrieve

@@ -4,6 +4,13 @@
   "description": "Shared library for shingo sf api",
   "main": "build/index.js",
   "types": "build/index.d.ts",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/shingoinstitute/shingo-sf-api.git"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "run-s clean && run-s build:*",
     "build:proto": "proto2ts ../../proto/sf_services.proto > src/sf_services.proto.ts",

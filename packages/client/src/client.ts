@@ -2,16 +2,24 @@ import * as path from 'path'
 import * as grpc from 'grpc'
 import { Options as ProtoOptions, loadSync } from '@grpc/proto-loader'
 import {
-  QueryRequest,
-  IdRequest,
-  RecordsRequest,
-  UpsertRequest,
-  SearchRequest,
-  sfservices,
+  sfservices as M,
+  RequireKeys,
+  DeepRequired,
 } from '@shingo/sf-api-shared'
-import { bindAll, promisifyAll, mapUndefined, unjsonify } from './util'
-// tslint:disable-next-line:no-implicit-dependencies
-import { DescribeSObjectResult, RecordResult, QueryResult } from 'jsforce'
+import {
+  bindAll,
+  promisifyAll,
+  mapUndefined,
+  unjsonify,
+  parseError,
+  handleRecordResults,
+} from './util'
+import {
+  DescribeSObjectResult,
+  RecordResult,
+  QueryResult,
+  SuccessResult /* tslint:disable:no-implicit-dependencies */,
+} from 'jsforce' /* tslint:enable:no-implicit-dependencies */
 import { PromisifyAll } from './promisify-fix'
 
 const throwOnUndefined = <T>(x: T | undefined): T => {
@@ -21,10 +29,40 @@ const throwOnUndefined = <T>(x: T | undefined): T => {
   return x
 }
 
+interface UpsertRequest {
+  object: string
+  records: object[]
+  extId: string
+}
+
+interface RecordsRequest {
+  object: string
+  records: object[]
+}
+
 const unjsonobject = mapUndefined(unjsonify)
+const toJSONObject = (x: object): Required<M.JSONObject> => ({
+  contents: JSON.stringify(x),
+})
+const toRecordsRequest = ({
+  object,
+  records,
+}: RecordsRequest): DeepRequired<M.RecordsRequest> => ({
+  object,
+  records: records.map(toJSONObject),
+})
+const toUpsertRequest = ({
+  object,
+  records,
+  extId,
+}: UpsertRequest): DeepRequired<M.UpsertRequest> => ({
+  object,
+  records: records.map(toJSONObject),
+  extId,
+})
 
 export class SalesforceClient {
-  client: PromisifyAll<sfservices.SalesforceMicroserviceClient>
+  client: PromisifyAll<M.SalesforceMicroserviceClient>
 
   constructor(address: string, creds?: grpc.ChannelCredentials) {
     const protoFile = path.join(__dirname, './proto', 'sf_services.proto')
@@ -43,7 +81,7 @@ export class SalesforceClient {
       bindAll(new clientClass(
         address,
         creds || grpc.credentials.createInsecure(),
-      ) as sfservices.SalesforceMicroserviceClient),
+      ) as M.SalesforceMicroserviceClient),
     )
   }
 
@@ -51,9 +89,12 @@ export class SalesforceClient {
    * Query salesforce fields using SOQL SELECT
    * @param req QueryRequest object
    */
-  query<T>(req: QueryRequest): Promise<QueryResult<T>> {
+  query<T>(
+    req: RequireKeys<M.QueryRequest, 'fields' | 'table'>,
+  ): Promise<QueryResult<T>> {
     return this.client
       .Query(req)
+      .catch(parseError)
       .then(unjsonobject)
       .then(throwOnUndefined) as Promise<QueryResult<T>>
   }
@@ -62,9 +103,10 @@ export class SalesforceClient {
    * Retrieve salesforce objects by id
    * @param req IdRequest object
    */
-  retrieve(req: IdRequest): Promise<unknown> {
+  retrieve(req: Required<M.IdRequest>): Promise<unknown> {
     return this.client
       .Retrieve(req)
+      .catch(parseError)
       .then(unjsonobject)
       .then(throwOnUndefined)
   }
@@ -73,44 +115,56 @@ export class SalesforceClient {
    * Create a salesforce object
    * @param req RecordsRequest object
    */
-  create(req: RecordsRequest): Promise<RecordResult[]> {
-    return this.client
-      .Create(req)
+  create(req: { object: string; records: object[] }): Promise<SuccessResult[]> {
+    return (this.client
+      .Create(toRecordsRequest(req))
+      .catch(parseError)
       .then(unjsonobject)
-      .then(throwOnUndefined) as Promise<RecordResult[]>
+      .then(throwOnUndefined) as Promise<RecordResult[]>).then(
+      handleRecordResults('Unable to create all requested records'),
+    )
   }
 
   /**
    * Update a salesforce object
    * @param req RecordsRequest object
    */
-  update(req: RecordsRequest): Promise<RecordResult[]> {
-    return this.client
-      .Update(req)
+  update(req: RecordsRequest): Promise<SuccessResult[]> {
+    return (this.client
+      .Update(toRecordsRequest(req))
+      .catch(parseError)
       .then(unjsonobject)
-      .then(throwOnUndefined) as Promise<RecordResult[]>
+      .then(throwOnUndefined) as Promise<RecordResult[]>).then(
+      handleRecordResults('Unable to update all requested records'),
+    )
   }
 
   /**
    * Delete salesforce objects by id
    * @param req IdRequest object
    */
-  delete(req: IdRequest): Promise<RecordResult[]> {
-    return this.client
+  delete(req: Required<M.IdRequest>): Promise<SuccessResult[]> {
+    return (this.client
       .Delete(req)
+      .catch(parseError)
       .then(unjsonobject)
-      .then(throwOnUndefined) as Promise<RecordResult[]>
+      .then(throwOnUndefined) as Promise<RecordResult[]>).then(
+      handleRecordResults('Unable to delete all requested records'),
+    )
   }
 
   /**
    * Upsert salesforce objects
    * @param req UpsertRequest object
    */
-  upsert(req: UpsertRequest): Promise<RecordResult[]> {
-    return this.client
-      .Upsert(req)
+  upsert(req: UpsertRequest): Promise<SuccessResult[]> {
+    return (this.client
+      .Upsert(toUpsertRequest(req))
+      .catch(parseError)
       .then(unjsonobject)
-      .then(throwOnUndefined) as Promise<RecordResult[]>
+      .then(throwOnUndefined) as Promise<RecordResult[]>).then(
+      handleRecordResults('Unable to upsert all requested records'),
+    )
   }
 
   /**
@@ -120,6 +174,7 @@ export class SalesforceClient {
   describe(object: string): Promise<DescribeSObjectResult> {
     return this.client
       .Describe({ object })
+      .catch(parseError)
       .then(unjsonobject)
       .then(throwOnUndefined) as Promise<DescribeSObjectResult>
   }
@@ -128,9 +183,12 @@ export class SalesforceClient {
    * Execute SOSL search
    * @param req SearchRequest object
    */
-  search(req: SearchRequest): Promise<{ searchRecords: Array<unknown> }> {
+  search(
+    req: Required<M.SearchRequest>,
+  ): Promise<{ searchRecords: Array<unknown> }> {
     return this.client
       .Search(req)
+      .catch(parseError)
       .then(unjsonobject)
       .then(throwOnUndefined) as Promise<{ searchRecords: Array<unknown> }>
   }

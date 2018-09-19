@@ -1,5 +1,6 @@
 *.json
 *.proto
-!packages/**/*.json
-**/*.proto.ts
-packages/*/build
+!packages/**/src/**/*.json
+*.proto.ts
+**/build
+**/migrations

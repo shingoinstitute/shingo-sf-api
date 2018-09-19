@@ -1,7 +1,7 @@
 import * as grpc from 'grpc'
 import * as path from 'path'
 import { SalesforceService } from '../salesforce.service'
-import { loggerFactory } from '../logger.service'
+import { loggerFactory } from '../logger.factory'
 import { handleUnary } from '../util'
 import { Options as ProtoOptions, loadSync } from '@grpc/proto-loader'
 import {

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { SalesforceMicroservice } from './microservices/salesforce.microservice'
 import * as grpc from 'grpc'
-import { loggerFactory } from './logger.service'
+import { loggerFactory } from './logger.factory'
 
 const globalLogger = loggerFactory()
 

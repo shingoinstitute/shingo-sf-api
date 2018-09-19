@@ -1,10 +1,8 @@
 import { Connection } from 'jsforce'
 import { ServiceError, status as Status, Metadata, handleUnaryCall } from 'grpc'
 import { Logger } from 'winston'
-import { RecordsRequest } from '@shingo/sf-api-shared'
+import { RecordsRequest, Omit } from '@shingo/sf-api-shared'
 import _ from 'lodash'
-
-export type Omit<T, K> = Pick<T, Exclude<keyof T, K>>
 
 /**
  * Authenticates a connection to salesforce and calls a function with the logged in connection
@@ -30,20 +28,24 @@ export class SError extends Error implements ServiceError {
   code?: Status
   metadata?: Metadata
 
-  constructor(error: Error, status?: Status) {
+  constructor(error: Error | object, status?: Status) {
     super()
-
-    this.message = error.message
-    this.name = error.name || 'Error'
+    this.message = (error as Error).message
+    this.name = (error as Error).name || 'Error'
     this.metadata = new Metadata()
-    this.metadata.add(
-      'error-bin',
-      Buffer.from(
-        error instanceof Error
-          ? JSON.stringify(error, Object.getOwnPropertyNames(error))
-          : JSON.stringify(error),
-      ),
-    )
+    const stringErr = JSON.stringify(error, (_key, value) => {
+      if (value instanceof Error) {
+        const err: any = {}
+        Object.getOwnPropertyNames(error).forEach(k => {
+          err[k] = (value as any)[k]
+        })
+
+        return err
+      }
+
+      return value
+    })
+    this.metadata.add('error-bin', Buffer.from(stringErr))
     this.code = status || Status.INTERNAL
   }
 }
@@ -67,7 +69,10 @@ export const handleUnary = (logger: Logger) => <Req, Res>(
 }
 
 export const getRecords = (req: RecordsRequest, omit: string[] = []) =>
-  req.records.map(record => _.omit(JSON.parse(record.contents), omit))
+  req.records.map(record => {
+    const val = record.value
+    return typeof val === 'object' ? _.omit(val, omit) : val
+  })
 
 const removeKey = (o: any) => (key: keyof any) => {
   if (_.isObject(o)) {
