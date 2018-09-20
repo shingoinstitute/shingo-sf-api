@@ -1,6 +1,6 @@
 {
   "name": "@shingo/sf-api-server",
-  "version": "1.0.0-alpha.0",
+  "version": "1.0.0-alpha.1",
   "description": "Shingo salesforce api server",
   "main": "index.js",
   "types": "index.d.ts",
@@ -29,7 +29,7 @@
   "license": "MIT",
   "dependencies": {
     "@grpc/proto-loader": "^0.3.0",
-    "@shingo/sf-api-shared": "^1.0.0-alpha.0",
+    "@shingo/sf-api-shared": "^1.0.0-alpha.1",
     "grpc": "^1.15.0",
     "jsforce": "^1.9.1",
     "lodash": "^4.17.11",
