@@ -29,13 +29,15 @@ const throwOnUndefined = <T>(x: T | undefined): T => {
   return x
 }
 
-interface UpsertRequest {
+export { M as sfservices }
+
+export interface UpsertRequest {
   object: string
   records: object[]
   extId: string
 }
 
-interface RecordsRequest {
+export interface RecordsRequest {
   object: string
   records: object[]
 }
