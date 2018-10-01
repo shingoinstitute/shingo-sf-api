@@ -105,12 +105,12 @@ export class SalesforceClient {
    * Retrieve salesforce objects by id
    * @param req IdRequest object
    */
-  retrieve(req: Required<M.IdRequest>): Promise<unknown> {
+  retrieve<T = unknown>(req: Required<M.IdRequest>): Promise<T[]> {
     return this.client
       .Retrieve(req)
       .catch(parseError)
       .then(unjsonobject)
-      .then(throwOnUndefined)
+      .then(throwOnUndefined) as Promise<T[]>
   }
 
   /**
@@ -185,13 +185,13 @@ export class SalesforceClient {
    * Execute SOSL search
    * @param req SearchRequest object
    */
-  search(
+  search<T = unknown>(
     req: Required<M.SearchRequest>,
-  ): Promise<{ searchRecords: Array<unknown> }> {
+  ): Promise<{ searchRecords: T[] }> {
     return this.client
       .Search(req)
       .catch(parseError)
       .then(unjsonobject)
-      .then(throwOnUndefined) as Promise<{ searchRecords: Array<unknown> }>
+      .then(throwOnUndefined) as Promise<{ searchRecords: T[] }>
   }
 }
